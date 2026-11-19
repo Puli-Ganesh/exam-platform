@@ -32,7 +32,7 @@ Edit `src/lib/config.ts` to set the title, support email, or privacy notice URL.
 ## Deploy to Vercel
 
 1. Push the contents of this project folder to your Git repository.
-2. Import that repository into Vercel. Select the Next.js framework preset and Node.js 24.x. The build uses the included `vercel.json` and publishes the static export from `out/`.
+2. Import that repository into Vercel. Use the Next.js framework preset and Node.js 24.x. Keep the **Output Directory** override off in **Settings → Build and Deployment** so Vercel can detect the static export. [Vercel output directory guidance](https://err.sh/vercel/vercel/now-next-routes-manifest)
 3. Open the preview deployment in a top-level desktop browser tab. Verify candidate registration, device permissions, full screen, and both submissions on the devices you intend to support before sharing the link.
 
 [Next.js static export](https://nextjs.org/docs/app/guides/static-exports) · [Vercel project configuration](https://vercel.com/docs/project-configuration)

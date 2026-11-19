@@ -143,7 +143,7 @@ function Setup({
           <div className="privacy-notice">
             <LockKeyhole size={17} aria-hidden="true" />
             <p>
-              The camera and microphone will be checked and will be evaluated. 
+              The camera and microphone are checked locally. Audio and video are never recorded or sent.
               {assessmentConfig.privacyNoticeUrl && (
                 <> <a href={assessmentConfig.privacyNoticeUrl} target="_blank" rel="noreferrer">Privacy notice</a>.</>
               )}
