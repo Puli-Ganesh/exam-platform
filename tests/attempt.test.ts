@@ -17,8 +17,8 @@ import {
 import { questions } from "../src/lib/questions.ts";
 
 const start = 1_800_000_000_000;
-const answerOne = "def audit_reservations(initial_stock, reservations, stock_changes):\n    return []\n\n# Review fixture\n";
-const answerTwo = "def earliest_delivery(n, lanes, source, destination, ready_time):\n    return -1\n\n# Review fixture\n";
+const answerOne = `${questions[0].signature}\n    return []\n\n# Review fixture\n`;
+const answerTwo = `${questions[1].signature}\n    return -1\n\n# Review fixture\n`;
 
 function saveAnswer(attempt: Attempt, index: QuestionIndex, text: string, now: number) {
   const draft = updateAnswer(attempt, index, text, now);

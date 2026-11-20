@@ -13,9 +13,9 @@ export type Question = {
 
 export const questions = [
   {
-    "title": "Warehouse Reservation Audit",
-    "description": "An online retailer accepts reservations for multiple products. A reservation temporarily locks units of a product. Physical stock can also change when a warehouse receives a replenishment or corrects its count. Given a historical feed, report which products could not cover all their active reservations and summarize the shortage for each affected product.",
-    "signature": "def audit_reservations(initial_stock, reservations, stock_changes):",
+    "title": "Conveyor Network Maintenance",
+    "description": "A distribution company operates warehouses connected by two-way conveyor links. Technicians open and close individual links throughout the day. For each audit request, report whether two warehouses can exchange parcels and how many warehouses each one can currently reach.",
+    "signature": "def audit_conveyor_network(n, operations):",
     "sections": [
       {
         "heading": "Inputs",
@@ -23,10 +23,10 @@ export const questions = [
           {
             "kind": "list",
             "items": [
-              "initial_stock is a list of length n. Product IDs are 1 through n. Product sku has initial physical stock initial_stock[sku - 1] immediately before any changes at minute 0.",
-              "Each item of reservations is [sku, start, end, units]. These units are reserved from the start minute through the minute before end. The reservation is active throughout the half-open interval [start, end). Different reservations add together, including duplicate records.",
-              "Each item of stock_changes is [sku, time, delta]. The signed change takes effect at time and persists until modified by later changes. A positive delta increases stock and a negative delta decreases it. All records are in arbitrary order.",
-              "When several changes or reservation boundaries occur at the same minute for one product, apply all effects at that minute together before measuring shortages. Do not measure a momentary shortage between simultaneous changes. After the combined effects at any minute, physical stock is guaranteed to be nonnegative."
+              "Warehouses are numbered from 1 to n. All links are closed before the first operation.",
+              "operations is a list of records in chronological order. Each record has the form [action, u, v], where action is OPEN, CLOSE, or QUERY.",
+              "OPEN activates the undirected link between u and v. CLOSE deactivates that same link. The order of the endpoints does not matter. A closed link can be opened again later.",
+              "When action is QUERY, consider only the links that are active at that point. Two warehouses are connected if a path of active links joins them. A warehouse can always reach itself."
             ]
           }
         ]
@@ -36,15 +36,15 @@ export const questions = [
         "blocks": [
           {
             "kind": "text",
-            "text": "Return a list of lists sorted by increasing sku, one row for each product that ever has a positive shortage:"
+            "text": "Return one row for each QUERY, in the order the queries appear."
           },
           {
             "kind": "code",
-            "text": "[sku, first_shortage_minute, peak_shortage, minutes_short, shortage_unit_minutes]"
+            "text": "[connected, size_u, size_v]"
           },
           {
             "kind": "text",
-            "text": "For each minute t, shortage = max(0, active reserved units - physical stock). first_shortage_minute is the earliest integer minute with a positive shortage. peak_shortage is the largest shortage in units. minutes_short counts every integer minute with a positive shortage across all shortage periods. shortage_unit_minutes sums the shortage in units across those minutes. Return [] if there is no shortage."
+            "text": "connected is 1 if u and v are connected and 0 otherwise. size_u and size_v are the numbers of warehouses reachable from u and v, including the starting warehouse. If u and v are connected, the two sizes are equal. An isolated warehouse has size 1. Return [] when there are no queries."
           }
         ]
       },
@@ -55,11 +55,10 @@ export const questions = [
             "kind": "list",
             "items": [
               "1 <= n <= 100,000.",
-              "len(reservations) + len(stock_changes) <= 200,000.",
-              "0 <= initial_stock[i] <= 10^9.",
-              "1 <= sku <= n, 0 <= start < end <= 10^9 and 0 <= time <= 10^9.",
-              "1 <= units <= 10^9 and -10^9 <= delta <= 10^9.",
-              "Submit a function that returns the requested value. Do not read stdin or print answers. Use only the Python standard library. The function must handle the full constraints."
+              "0 <= len(operations) <= 200,000.",
+              "1 <= u, v <= n. OPEN and CLOSE always have distinct endpoints. QUERY can use the same warehouse twice.",
+              "An OPEN always refers to a closed link. A CLOSE always refers to an active link. There is at most one active link for each unordered pair.",
+              "Use only the Python standard library. Return the result from the function and handle the full input limits."
             ]
           }
         ]
@@ -67,33 +66,41 @@ export const questions = [
     ],
     "examples": [
       {
-        "code": "initial_stock = [6, 4, 3]\nreservations = [\n    [1, 1, 5, 5], [1, 3, 7, 4], [1, 5, 8, 3],\n    [2, 0, 2, 4], [2, 2, 5, 3], [3, 4, 6, 2]\n]\nstock_changes = [[1, 4, 2], [1, 6, -4], [2, 2, -2], [2, 4, 1]]\nreturn value = [[1, 3, 3, 3, 7], [2, 2, 1, 2, 2]]",
-        "explanation": "Product 1 is short by 3 units in minute 3, 1 unit in minute 4, and 3 units in minute 6. Thus it is short for 3 minutes and the total shortage is 7 unit-minutes. Product 2 is short by 1 unit in minutes 2 and 3. Product 3 never has a shortage."
+        "code": "n = 5\noperations = [\n    [\"OPEN\", 1, 2],\n    [\"OPEN\", 2, 3],\n    [\"QUERY\", 1, 3],\n    [\"OPEN\", 4, 5],\n    [\"QUERY\", 1, 5],\n    [\"OPEN\", 3, 4],\n    [\"QUERY\", 5, 2],\n    [\"CLOSE\", 2, 3],\n    [\"QUERY\", 2, 4],\n    [\"OPEN\", 3, 2],\n    [\"QUERY\", 1, 5],\n]\nexpected = [[1, 3, 3], [0, 3, 2], [1, 5, 5], [0, 2, 3], [1, 5, 5]]",
+        "explanation": "Closing the link between 2 and 3 splits the network into groups of sizes 2 and 3. Reopening the link as [3, 2] joins all five warehouses again."
       },
       {
-        "code": "initial_stock = [5]\nreservations = [[1, 3, 6, 7], [1, 0, 3, 5]]\nstock_changes = [[1, 3, 3], [1, 3, -1]]\nreturn value = []",
-        "explanation": "At minute 3 the earlier reservation ends, the next starts, and the stock changes by a net +2. Demand and stock are both 7 after those events."
+        "code": "n = 4\noperations = [\n    [\"QUERY\", 4, 4],\n    [\"OPEN\", 1, 2],\n    [\"OPEN\", 2, 3],\n    [\"OPEN\", 3, 1],\n    [\"CLOSE\", 2, 1],\n    [\"QUERY\", 1, 2],\n    [\"CLOSE\", 1, 3],\n    [\"QUERY\", 1, 2],\n]\nexpected = [[1, 1, 1], [1, 3, 3], [0, 1, 2]]",
+        "explanation": "The first query is on an isolated warehouse. After closing the link between 1 and 2, those warehouses can still exchange parcels via 3. Closing the link between 1 and 3 then isolates warehouse 1."
       }
     ],
-    "starter": "def audit_reservations(initial_stock, reservations, stock_changes):\n    pass\n"
+    "starter": "def audit_conveyor_network(n, operations):\n    pass\n"
   },
   {
-    "title": "Parcel Routing With One Priority Pass",
-    "description": "A delivery company routes a parcel between hubs. Ordinary trucks leave each directed lane on a schedule. A single priority pass, when used on an eligible lane, lets a parcel depart that lane as soon as it reaches the departure hub. Find the earliest possible delivery time.",
-    "signature": "def earliest_delivery(n, lanes, source, destination, ready_time):",
+    "title": "Minimum-Time Parcel Batches",
+    "description": "A parcel inspection station receives a line of parcels in a fixed order. It can inspect the parcels within a batch in parallel, so the batch finishes when its slowest parcel finishes. The station handles one batch at a time. Split the line into batches to minimize the total inspection time.",
+    "signature": "def minimum_inspection_time(parcel_weights, inspection_minutes, max_batch_weight):",
     "sections": [
       {
-        "heading": "Inputs and routing rules",
+        "heading": "Inputs and batching rules",
         "blocks": [
           {
             "kind": "list",
             "items": [
-              "Hubs are numbered 1 through n. The parcel is available at source at the integer minute ready_time. Return the earliest absolute minute it can reach destination, or -1 if there is no route.",
-              "Each entry in lanes is [u, v, travel, first, period, eligible]. It is a directed lane from u to v, with travel duration travel. Regular departures occur at times first, first + period, first + 2*period, and so on, with no final departure and no departures earlier than first.",
-              "To take a regular departure, the parcel must reach u by that departure time. Arrival at exactly the departure minute is allowed. Waiting at any hub is allowed and transfer time is zero.",
-              "When eligible = 1, the parcel may spend its priority pass to depart that lane immediately at its arrival minute at u, even before first. Travel duration does not change. At most one pass can be spent across the entire route. A parcel can travel on an eligible lane normally without spending the pass.",
-              "Lanes between the same ordered pair of hubs can have different schedules and travel times. Consider them separately. Return ready_time when source equals destination. Return the absolute arrival minute, not elapsed time, a path, or whether a pass was used."
+              "parcel_weights and inspection_minutes are lists of equal length. At index i, they give the weight and inspection time of the same parcel.",
+              "Each batch must be a nonempty consecutive portion of the original line. Every parcel must appear in exactly one batch, and the batches must follow the original order.",
+              "The sum of the parcel weights in a batch must be at most max_batch_weight. A batch with weight exactly equal to the limit is allowed.",
+              "The time for a batch is the largest inspection time among the parcels in that batch. The total time is the sum of the batch times. There is no limit on the number of batches."
             ]
+          }
+        ]
+      },
+      {
+        "heading": "Output",
+        "blocks": [
+          {
+            "kind": "text",
+            "text": "Return the minimum achievable total inspection time as an integer. If any parcel is heavier than max_batch_weight, return -1. If there are no parcels, return 0."
           }
         ]
       },
@@ -103,10 +110,9 @@ export const questions = [
           {
             "kind": "list",
             "items": [
-              "1 <= n <= 100,000 and 0 <= len(lanes) <= 200,000.",
-              "1 <= u, v, source, destination <= n; u != v.",
-              "1 <= travel, period <= 10^9; 0 <= first, ready_time <= 10^9.",
-              "eligible is either 0 or 1. Use only the Python standard library and return the value without reading stdin or printing it. The function must handle the full constraints."
+              "0 <= len(parcel_weights) == len(inspection_minutes) <= 200,000.",
+              "1 <= parcel_weights[i], inspection_minutes[i], max_batch_weight <= 10^9.",
+              "Use only the Python standard library. Return the result from the function and handle the full input limits."
             ]
           }
         ]
@@ -114,18 +120,18 @@ export const questions = [
     ],
     "examples": [
       {
-        "code": "n = 4\nlanes = [\n    [1, 2, 2, 2, 5, 1], [2, 4, 2, 9, 10, 1],\n    [1, 3, 1, 3, 10, 0], [3, 4, 3, 4, 10, 0],\n    [1, 4, 7, 0, 1, 0]\n]\nsource = 1\ndestination = 4\nready_time = 1\nreturn value = 6",
-        "explanation": "Take the regular departure from hub 1 to hub 2 at minute 2 and reach hub 2 at minute 4. Spend the pass on the next lane to depart at minute 4 and arrive at hub 4 at minute 6. The route via hub 3 arrives at minute 7. The direct lane arrives at minute 8."
+        "code": "parcel_weights = [1, 1, 1, 1]\ninspection_minutes = [1, 8, 8, 1]\nmax_batch_weight = 2\nexpected = 10",
+        "explanation": "Numbering parcels from 1, the best split is [1], [2, 3], [4]. The two slow parcels share a batch, so the total is 1 + 8 + 1 = 10."
       },
       {
-        "code": "n = 3\nlanes = [[1, 2, 4, 5, 10, 0], [2, 3, 3, 9, 12, 0]]\nsource = 1\ndestination = 3\nready_time = 6\nreturn value = 24",
-        "explanation": "The parcel misses the first departure and boards at minute 15. It reaches hub 2 at minute 19, boards the next lane at minute 21, and arrives at minute 24. If source and destination are swapped, the result is -1 because the lanes are directed."
+        "code": "parcel_weights = [2, 1, 3, 2, 2]\ninspection_minutes = [4, 9, 6, 8, 2]\nmax_batch_weight = 4\nexpected = 21",
+        "explanation": "One optimal split is [1], [2, 3], [4, 5]. The last two batches each have weight 4, and the total inspection time is 4 + 9 + 8 = 21."
       },
       {
-        "code": "n = 2\nlanes = [[1, 2, 2, 7, 5, 1], [1, 2, 4, 1, 10, 0]]\nsource = 1\ndestination = 2\nready_time = 3\nreturn value = 5",
-        "explanation": "Spending the pass on the first lane allows departure at minute 3 and arrival at minute 5. Its earliest regular arrival is minute 9. The other lane's earliest arrival is minute 15."
+        "code": "parcel_weights = [2, 6, 1]\ninspection_minutes = [4, 5, 8]\nmax_batch_weight = 5\nexpected = -1",
+        "explanation": "The second parcel weighs 6, so it cannot fit even in a batch by itself."
       }
     ],
-    "starter": "def earliest_delivery(n, lanes, source, destination, ready_time):\n    pass\n"
+    "starter": "def minimum_inspection_time(parcel_weights, inspection_minutes, max_batch_weight):\n    pass\n"
   }
 ] as const satisfies readonly [Question, Question];

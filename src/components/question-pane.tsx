@@ -2,7 +2,7 @@ import { FileText } from "lucide-react";
 import { type ReactNode } from "react";
 import { type Question } from "../lib/questions";
 
-const identifiers = /\b(initial_stock(?:\[sku - 1\]|\[i\])?|stock_changes|reservations|first_shortage_minute|shortage_unit_minutes|peak_shortage|minutes_short|ready_time|eligible = 1)\b/g;
+const identifiers = /\b(operations|OPEN|CLOSE|QUERY|connected|size_u|size_v|parcel_weights|inspection_minutes|max_batch_weight)\b/g;
 
 function InlineCode({ text }: { text: string }) {
   return text.split(identifiers).map((piece, index) =>

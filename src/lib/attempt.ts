@@ -1,7 +1,7 @@
 import { questions } from "./questions.ts";
 import type { CandidateDetails } from "./candidate.ts";
 
-export const storageKey = "python-hiring-assessment:v1";
+export const storageKey = "python-hiring-assessment:v2";
 export const maxAnswerBytes = 64 * 1024;
 export const questionIndices = [0, 1] as const;
 
