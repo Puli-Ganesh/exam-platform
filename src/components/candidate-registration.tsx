@@ -83,7 +83,7 @@ export function CandidateRegistration({ initialDetails, onSubmit }: {
           </div>
           <div className="privacy-notice">
             <LockKeyhole size={17} aria-hidden="true" />
-            <p>Your details and answers stay in this browser tab. You can download them together and send the file to your recruiter when you finish.</p>
+            <p>You can download them together and send the file to your recruiter when you finish.</p>
           </div>
           <div className="registration-actions">
             <button className="button primary" type="submit">
